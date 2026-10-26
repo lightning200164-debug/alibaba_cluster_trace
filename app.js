@@ -123,11 +123,17 @@
   }
 
   function renderPlotOrFallback(containerId, traces, layout, options, fallback) {
+    // Render a static chart first. Plotly then upgrades it with hover and zoom
+    // when the browser supports the interactive library. This guarantees that
+    // the chart is still visible if Plotly fails silently in a browser.
+    fallback();
     if (typeof Plotly === "undefined" || typeof Plotly.react !== "function") {
-      fallback();
       return;
     }
     try {
+      // Plotly expects to own the container. Remove the static SVG before
+      // upgrading it, while keeping the fallback available on any failure.
+      $(containerId).innerHTML = "";
       const pending = Plotly.react(containerId, traces, layout, options);
       if (pending && typeof pending.catch === "function") {
         pending.catch((error) => {
@@ -135,6 +141,10 @@
           fallback();
         });
       }
+      window.setTimeout(() => {
+        const container = $(containerId);
+        if (!container.querySelector(".plotly-graph-div")) fallback();
+      }, 3000);
     } catch (error) {
       console.error(`图表 ${containerId} 渲染失败，已切换为兼容图`, error);
       fallback();
