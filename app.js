@@ -95,7 +95,7 @@
   // Keep the controls, table and data downloads usable even when a network
   // If the local Plotly file is missing or blocked, keep a compact static SVG
   // chart so the selectors, tables and downloads remain usable.
-  function renderFallbackLineChart(containerId, series, xValues, yLabel) {
+  function renderFallbackLineChart(containerId, series, xValues, yLabel, xLabel = "时段起始小时") {
     const width = 900;
     const height = 390;
     const pad = { left: 72, right: 24, top: 28, bottom: 52 };
@@ -118,7 +118,7 @@
       return `<polyline points="${points}" fill="none" stroke="${s.color}" stroke-width="${s.width || 2}"/>${dots}`;
     }).join("");
     const legend = series.map((s, i) => `<g transform="translate(${pad.left + i * 155},14)"><line x1="0" y1="0" x2="24" y2="0" stroke="${s.color}" stroke-width="3"/><text x="31" y="4" fill="#334155" font-size="12">${s.label}</text></g>`).join("");
-    const svg = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${yLabel}曲线"><rect width="100%" height="100%" fill="#fff"/>${grid}<line x1="${pad.left}" y1="${pad.top + plotHeight}" x2="${width - pad.right}" y2="${pad.top + plotHeight}" stroke="#9aa8ba"/>${paths}${legend}<text x="${width / 2}" y="${height - 10}" text-anchor="middle" fill="#64748b" font-size="12">时段起始小时</text><text transform="translate(16 ${height / 2}) rotate(-90)" text-anchor="middle" fill="#64748b" font-size="12">${yLabel}</text></svg>`;
+    const svg = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${yLabel}曲线"><rect width="100%" height="100%" fill="#fff"/>${grid}<line x1="${pad.left}" y1="${pad.top + plotHeight}" x2="${width - pad.right}" y2="${pad.top + plotHeight}" stroke="#9aa8ba"/>${paths}${legend}<text x="${width / 2}" y="${height - 10}" text-anchor="middle" fill="#64748b" font-size="12">${xLabel}</text><text transform="translate(16 ${height / 2}) rotate(-90)" text-anchor="middle" fill="#64748b" font-size="12">${yLabel}</text></svg>`;
     $(containerId).innerHTML = `<div class="plot-fallback-note">交互图表库未加载，已使用静态兼容图；选择器和数据表仍可正常使用。</div>${svg}`;
   }
 
@@ -207,7 +207,7 @@
       return state.metric === "energy" ? sum(group, "facility_energy_kwh") : mean(group, "facility_power_mw");
     });
     $("trendTitle").textContent = state.metric === "energy" ? "每日设施侧用电量趋势" : "每日平均数据中心功率趋势";
-    const fallback = () => renderFallbackLineChart("trendChart", [{ label: "数据中心侧", color: "#155eef", width: 3, y: values }], keys, config.unit);
+    const fallback = () => renderFallbackLineChart("trendChart", [{ label: "数据中心侧", color: "#155eef", width: 3, y: values }], keys, config.unit, "相对 trace day");
     renderPlotOrFallback("trendChart", [{ x: keys, y: values, type: "scatter", mode: "lines", line: { color: "#155eef", width: 2 }, fill: "tozeroy", fillcolor: "rgba(21,94,239,.10)", hovertemplate: state.metric === "energy" ? "第 %{x} 天<br>%{y:,.0f} kWh<extra></extra>" : "第 %{x} 天<br>%{y:,.2f} MW<extra></extra>" }], {
       margin: { l: 62, r: 18, t: 18, b: 50 },
       paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "#fff",
